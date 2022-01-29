@@ -35,7 +35,7 @@ export default function QuizQuestion({
     const [correctAnswerWas, setCorrectAnswerWas] = useState<number | undefined>(
         undefined
     );
-    const { address } = useWeb3();
+    const { address, provider } = useWeb3();
 
     if (!address) {
         return <p>Please connect your wallet to take the quiz!</p>
@@ -51,10 +51,16 @@ export default function QuizQuestion({
                 "Answer index is required to submit"
             );
 
+            invariant(provider !== undefined, "Provider must be defined to submit an answer");
+
+            const message = "Please sign this message to confirm your identity and submit the answer.This won't cost any gas!"
+            const signedMessage = await provider.getSigner().signMessage(message)
+
             const payload: CheckAnswerPayload = {
-                address,
                 questionIndex,
                 answerIndex,
+                message,
+                signedMessage,
             };
 
             const checkResponse = await axios.post("/api/check-answer", payload);
